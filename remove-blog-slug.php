@@ -13,8 +13,8 @@ if ( ! function_exists( 'add_action' ) )
 	return;
 
 // kickoff
-add_action( 'init', 'remove_blog_slug' );
-function remove_blog_slug() {
+add_action( 'generate_rewrite_rules', 'remove_blog_slug' );
+function remove_blog_slug( $wp_rewrite ) {
 	
 	// check multisite
 	if ( ! is_multisite() )
@@ -24,11 +24,41 @@ function remove_blog_slug() {
 	if ( get_current_blog_id() != 1 )
 		return;
 	
-	// check option
-	$permalink_structure = get_option( 'permalink_structure' );
-	if ( strstr( $permalink_structure, 'blog' ) ) {
-		$permalink_structure = str_replace( 'blog/', '', $permalink_structure );
-		update_option( 'permalink_structure', $permalink_structure );
-		flush_rewrite_rules( TRUE );
+	// set checkup
+	$rewrite = FALSE;
+	
+	// update_option
+	$wp_rewrite->permalink_structure = str_replace( 'blog/', '', $wp_rewrite->permalink_structure );
+	update_option( 'permalink_structure', $wp_rewrite->permalink_structure );
+	
+	// update the rest of the rewrite setup
+	$wp_rewrite->author_structure = str_replace( 'blog/', '', $wp_rewrite->author_structure );
+	$wp_rewrite->date_structure = str_replace( 'blog/', '', $wp_rewrite->date_structure );
+	$wp_rewrite->front = str_replace( 'blog/', '', $wp_rewrite->front );
+	
+	// walk through the rules
+	$new_rules = array();
+	foreach ( $wp_rewrite->rules as $key => $rule )
+		$new_rules[ str_replace( 'blog/', '', $key ) ] = $rule;
+	$wp_rewrite->rules = $new_rules;
+	
+	// walk through the extra_rules
+	$new_rules = array();
+	foreach ( $wp_rewrite->extra_rules as $key => $rule )
+		$new_rules[ str_replace( 'blog/', '', $key ) ] = $rule;
+	$wp_rewrite->extra_rules = $new_rules;
+	
+	// walk through the extra_rules_top
+	$new_rules = array();
+	foreach ( $wp_rewrite->extra_rules_top as $key => $rule )
+		$new_rules[ str_replace( 'blog/', '', $key ) ] = $rule;
+	$wp_rewrite->extra_rules_top = $new_rules;
+	
+	// walk through the extra_permastructs
+	$new_structs = array();
+	foreach ( $wp_rewrite->extra_permastructs as $extra_permastruct => $struct ) {
+		$struct[ 'struct' ] = str_replace( 'blog/', '', $struct[ 'struct' ] );
+		$new_structs[ $extra_permastruct ] = $struct;
 	}
+	$wp_rewrite->extra_permastructs = $new_structs;
 }
