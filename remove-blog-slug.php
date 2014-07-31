@@ -16,12 +16,8 @@ if ( ! function_exists( 'add_action' ) )
 add_action( 'generate_rewrite_rules', 'remove_blog_slug' );
 function remove_blog_slug( $wp_rewrite ) {
 
-	// check multisite
-	if ( ! is_multisite() )
-		return;
-
-	// check blogid
-	if ( get_current_blog_id() != 1 )
+	// check multisite and main site
+	if ( ! is_main_site() )
 		return;
 
 	// set checkup
