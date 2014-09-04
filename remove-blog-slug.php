@@ -2,9 +2,9 @@
 /**
  * Plugin Name:	Remove Blog Slug
  * Description:	This simple and small plugin removes the /blog/-Slug from your WordPress posts in the main blog of your MultiSite installation
- * Version:		1.0
- * Author:		HerrLlama for Inpsyde GmbH
- * Author URI:	http://inpsyde.com
+ * Version:		1.0.1
+ * Author:		HerrLlama for wpcoding.de
+ * Author URI:	http://wpcoding.de
  * Licence:		GPLv3
  */
 
@@ -12,8 +12,18 @@
 if ( ! function_exists( 'add_action' ) )
 	return;
 
-// kickoff
-add_action( 'generate_rewrite_rules', 'remove_blog_slug' );
+// check multisite
+if ( ! is_multisite() )
+	return;
+
+/**
+ * This function rewrites all the permalinks to remove
+ * the /blog from the structure
+ *
+ * @wp-hook	generate_rewrite_rules
+ * @param	object $wp_rewrite
+ * @return	void
+ */
 function remove_blog_slug( $wp_rewrite ) {
 
 	// check multisite and main site
@@ -57,4 +67,39 @@ function remove_blog_slug( $wp_rewrite ) {
 		$new_structs[ $extra_permastruct ] = $struct;
 	}
 	$wp_rewrite->extra_permastructs = $new_structs;
-}
+} add_action( 'generate_rewrite_rules', 'remove_blog_slug' );
+
+/**
+ * This function loads the textdomain for this plugin
+ *
+ * @wp-hook	plugins_loaded
+ * @return	void
+ */
+function rbs_prepare_localization() {
+
+	load_plugin_textdomain( 'remove-blog-slug', FALSE, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+} add_action( 'plugins_loaded', 'rbs_prepare_localization' );
+
+/**
+ * This function adds an admin notice to the permalink
+ * settings page to describe what the plugin does.
+ *
+ * @wp-hook	admin_notices
+ * @return	void
+ */
+function rbs_admin_notice() {
+
+	// check if we are on the permalink page
+	global $pagenow;
+	if ( $pagenow != 'options-permalink.php' )
+		return;
+
+	echo '<div class="updated">';
+		echo '<p>';
+			echo '<strong>';
+				_e( 'Please note:', 'remove-blog-slug' );
+			echo '</strong> ';
+			_e( 'You are using the plugin Remove Blog Slug. Even if here is "blog" in the structure, the plugin works. This is because WordPress has hard-coded "blog". Simply update the structure and the front end is "blog" is no longer displayed.', 'remove-blog-slug' );
+		echo '</p>';
+	echo '</div>';
+} add_action( 'admin_notices', 'rbs_admin_notice' );
